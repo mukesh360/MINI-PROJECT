@@ -59,3 +59,26 @@ class BM25Index:
         obj.bm25 = data["bm25"]
         obj.id_map = data["id_map"]
         return obj
+
+
+# ✅ PIPELINE-FACING WRAPPER
+class SparseRetriever:
+    """
+    Thin adapter for BM25Index used by retrieval.pipeline
+    """
+
+    def __init__(self, index_path: str, top_k: int = 5):
+        self.index = BM25Index.load(index_path)
+        self.top_k = top_k
+
+    def search(self, query: str):
+        results = self.index.search(query, top_k=self.top_k)
+
+        return [
+            {
+                "chunk_id": chunk_id,
+                "score": score,
+                "source": "sparse",
+            }
+            for chunk_id, score in results
+        ]
