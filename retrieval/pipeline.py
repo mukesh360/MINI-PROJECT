@@ -29,7 +29,9 @@ class RetrievalPipeline:
             dense_results,
             sparse_results,
         )
-        return ranked
+
+        return self._attach_text(ranked)
+
 
 
     def _attach_text(self, results: List[Dict]) -> List[Dict]:

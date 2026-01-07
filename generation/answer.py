@@ -4,7 +4,7 @@ from generation.llm import LLM
 
 class AnswerGenerator:
     def __init__(self, llm: LLM):
-        self.llm = llm
+        self.llm = LLM()
 
     def generate(
         self,

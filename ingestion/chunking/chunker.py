@@ -4,8 +4,8 @@ from ingestion.chunking.token_chunker import TokenChunker
 
 def chunk_text(
     text: Union[str, List[str]],
-    max_tokens: int = 512,
-    overlap: int = 50,
+    max_tokens: int = 300,
+    overlap: int = 100,
 ) -> List[str]:
     """
     Safely chunk text into token-bounded chunks.

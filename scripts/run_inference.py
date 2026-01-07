@@ -27,7 +27,7 @@ def run_query(question: str):
     context, citations = context_builder.build(retrieved)
 
     # 4️⃣ Generate answer
-    llm = LLM(model="gpt-4o-mini")  # or local model
+    llm = LLM()  # or local model
     generator = AnswerGenerator(llm)
 
     result = generator.generate(
@@ -41,7 +41,7 @@ def run_query(question: str):
 
 if __name__ == "__main__":
     response = run_query(
-        "What is retrieval augmented generation?"
+        "Turning circle"
     )
 
     print("\nAnswer:\n", response["answer"])
