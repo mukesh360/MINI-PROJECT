@@ -1,0 +1,74 @@
+# ======================
+# Python
+# ======================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# ======================
+# Virtual Environments
+# ======================
+venv/
+.env/
+.env.*
+
+# ======================
+# pytest / testing
+# ======================
+.pytest_cache/
+.coverage
+htmlcov/
+.cache/
+
+# ======================
+# OS / Editor
+# ======================
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ======================
+# Logs
+# ======================
+*.log
+
+# ======================
+# Runtime / Data
+# ======================
+storage/
+registry/
+*.db
+*.sqlite
+*.sqlite3
+
+# ======================
+# Generated embeddings / indexes
+# ======================
+*.faiss
+*.index
+*.bin
+
+# ======================
+# Docker
+# ======================
+docker/.env
+
+# ======================
+# Jupyter / Experiments
+# ======================
+.ipynb_checkpoints/
+
+# ======================
+# Misc
+# ======================
+*.tmp
+*.bak
+git rm -r --cached venv registry storage .pytest_cache
