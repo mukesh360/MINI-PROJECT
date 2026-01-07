@@ -1,57 +1,25 @@
-from typing import List, Dict
-
-from retrieval.dense import DenseRetriever
-from retrieval.sparse import SparseRetriever
-from retrieval.rerank import Reranker
-from storage.db import get_connection
+from retrieval.retriever import Retriever
+from retrieval.context_builder import build_context_from_chunks
+from storage.registry import load_all_chunks
 
 
 class RetrievalPipeline:
-    def __init__(
-        self,
-        faiss_index_path: str = "vectors.faiss",
-        mapping_path: str = "id_map.json",
-        dense_top_k: int = 30,     # ⬅ expanded
-        sparse_top_k: int = 30,    # ⬅ expanded
-    ):
-        self.dense = DenseRetriever(
-            index_path=faiss_index_path,
-            mapping_path=mapping_path,
-            top_k=dense_top_k,
-        )
-        self.sparse = SparseRetriever(top_k=sparse_top_k)
-        self.reranker = Reranker()
+    def __init__(self):
+        print("🔧 Initializing RetrievalPipeline")
 
-    def search(self, query: str):
-        dense_results = self.dense.search(query)
-        sparse_results = self.sparse.search(query)
+        chunks = load_all_chunks()
 
-        ranked = self.reranker.rerank(
-            dense_results,
-            sparse_results,
+        if not chunks:
+            raise RuntimeError(
+                "No chunks found. Upload documents before querying."
+            )
+
+        self.retriever = Retriever(chunks)
+
+    def get_context(self, query: str, max_chunks: int = 5) -> str:
+        retrieved_chunks = self.retriever.retrieve(
+            query=query,
+            top_k=max_chunks
         )
 
-        return self._attach_text(ranked)
-
-
-
-    def _attach_text(self, results: List[Dict]) -> List[Dict]:
-        conn = get_connection()
-        enriched = []
-
-        for r in results:
-            row = conn.execute(
-                """
-                SELECT content
-                FROM chunks
-                WHERE chunk_id = ?
-                """,
-                (r["chunk_id"],)
-            ).fetchone()
-
-            if row:
-                r["text"] = row[0]
-                enriched.append(r)
-
-        conn.close()
-        return enriched
+        return build_context_from_chunks(retrieved_chunks)
