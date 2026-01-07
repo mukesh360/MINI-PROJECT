@@ -18,49 +18,37 @@ const handleSendMessage = async () => {
 
   const question = currentInput;
 
-  // 1️⃣ Add USER message
+  // 1️⃣ Show chat + add user message
+  setShowChat(true);
+
   setMessages(prev => [
     ...prev,
-    {
-      id: Date.now(),
-      sender: "user",
-      text: question
-    }
+    { sender: "user", text: question },
+    { sender: "bot", text: "", citations: [] } // placeholder
   ]);
 
   setCurrentInput("");
-  setShowChat(true);
   setLoading(true);
 
-  // 2️⃣ Add BOT placeholder
-  setMessages(prev => [
-    ...prev,
-    {
-      id: Date.now() + 1,
-      sender: "bot",
-      text: "",
-      citations: []
-    }
-  ]);
-
   try {
-    // 3️⃣ Call streaming API
+    // 2️⃣ STREAM FROM BACKEND
     const response = await fetch("http://localhost:8000/query/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question })
     });
 
-    if (!response.body) {
-      throw new Error("No response body");
-    }
+    // 3️⃣ READ CITATIONS HEADER
+    const citations = JSON.parse(
+      response.headers.get("X-Citations") || "[]"
+    );
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
     let result = "";
 
-    // 4️⃣ Stream tokens
+    // 4️⃣ TOKEN-BY-TOKEN STREAM
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -69,20 +57,17 @@ const handleSendMessage = async () => {
 
       setMessages(prev => [
         ...prev.slice(0, -1),
-        {
-          ...prev[prev.length - 1],
-          text: result
-        }
+        { sender: "bot", text: result, citations }
       ]);
     }
-
   } catch (err) {
     console.error(err);
     setMessages(prev => [
       ...prev.slice(0, -1),
       {
         sender: "bot",
-        text: "⚠️ Error talking to backend"
+        text: "⚠️ Error generating answer.",
+        citations: []
       }
     ]);
   } finally {

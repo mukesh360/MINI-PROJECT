@@ -2,49 +2,28 @@ from typing import List, Tuple
 from ingestion.chunking.tokenizer import TokenCounter
 from storage.db import get_connection
 
-
 class ContextBuilder:
-    def __init__(self, max_tokens: int = 800):
+    def __init__(self, max_tokens=800):
         self.max_tokens = max_tokens
-        self.counter = TokenCounter()
 
-    def build(self, chunks: List[dict]) -> Tuple[str, List[str]]:
-        """
-        Builds context by:
-        - Fetching text from DB
-        - Enforcing token budget
-        - Returning citations
-        """
-        conn = get_connection()
-
-        context_parts = []
+    def build(self, chunks):
+        context = []
         citations = []
-        total_tokens = 0
+        seen = set()
 
-        for chunk in chunks:
-            chunk_id = chunk["chunk_id"]
+        for c in chunks:
+            context.append(c["content"])
 
-            row = conn.execute(
-                "SELECT content FROM chunks WHERE chunk_id = ?",
-                (chunk_id,),
-            ).fetchone()
+            if c["chunk_id"] not in seen:
+                citations.append({
+                    "chunk_id": c["chunk_id"],
+                    "file": c["file_id"],
+                    "page": c.get("page", "?")
+                })
+                seen.add(c["chunk_id"])
 
-            if not row:
-                continue
+        return "\n\n".join(context), citations
 
-            text = row[0]
-            tokens = self.counter.count(text)
-
-            if total_tokens + tokens > self.max_tokens:
-                break
-
-            context_parts.append(text)
-            citations.append(chunk_id)
-            total_tokens += tokens
-
-        conn.close()
-
-        return "\n\n".join(context_parts), citations
 
 def build_context_from_chunks(chunks):
     context_parts = []
