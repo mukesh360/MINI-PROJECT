@@ -16,37 +16,80 @@ function App() {
 const handleSendMessage = async () => {
   if (!currentInput.trim()) return;
 
-  const userMessage = {
-    id: Date.now(),
-    text: currentInput,
-    sender: "user",
-  };
+  const question = currentInput;
 
-  setMessages(prev => [...prev, userMessage]);
+  // 1️⃣ Add USER message
+  setMessages(prev => [
+    ...prev,
+    {
+      id: Date.now(),
+      sender: "user",
+      text: question
+    }
+  ]);
+
   setCurrentInput("");
+  setShowChat(true);
+  setLoading(true);
+
+  // 2️⃣ Add BOT placeholder
+  setMessages(prev => [
+    ...prev,
+    {
+      id: Date.now() + 1,
+      sender: "bot",
+      text: "",
+      citations: []
+    }
+  ]);
 
   try {
-    const res = await askQuestion(currentInput, selectedFiles);
+    // 3️⃣ Call streaming API
+    const response = await fetch("http://localhost:8000/query/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
 
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Date.now() + 1,
-        text: res.answer,
-        sender: "bot",
-      },
-    ]);
+    if (!response.body) {
+      throw new Error("No response body");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    let result = "";
+
+    // 4️⃣ Stream tokens
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      result += decoder.decode(value, { stream: true });
+
+      setMessages(prev => [
+        ...prev.slice(0, -1),
+        {
+          ...prev[prev.length - 1],
+          text: result
+        }
+      ]);
+    }
+
   } catch (err) {
+    console.error(err);
     setMessages(prev => [
-      ...prev,
+      ...prev.slice(0, -1),
       {
-        id: Date.now() + 2,
-        text: "⚠️ Server error",
         sender: "bot",
-      },
+        text: "⚠️ Error talking to backend"
+      }
     ]);
+  } finally {
+    setLoading(false);
   }
 };
+
 
 
   // 🔹 FILE UPLOAD → BACKEND

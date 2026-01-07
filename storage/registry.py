@@ -81,21 +81,25 @@ def ingest_jsonl(jsonl_path: str):
 
 def load_all_chunks():
     conn = get_connection()
-
     rows = conn.execute("""
-        SELECT chunk_id, content, metadata
+        SELECT
+            chunk_id,
+            file_id,
+            chunk_index,
+            content,
+            metadata
         FROM chunks
-        ORDER BY chunk_index
     """).fetchall()
-
     conn.close()
 
     chunks = []
-    for chunk_id, content, metadata in rows:
+    for r in rows:
         chunks.append({
-            "chunk_id": chunk_id,
-            "content": content,
-            "metadata": json.loads(metadata) if metadata else {}
+            "chunk_id": r[0],
+            "file_id": r[1],          # ✅ REQUIRED
+            "page": r[2] + 1,         # or extract from metadata
+            "content": r[3],
+            "metadata": r[4]
         })
 
     return chunks

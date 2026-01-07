@@ -47,6 +47,17 @@ class ContextBuilder:
         return "\n\n".join(context_parts), citations
 
 def build_context_from_chunks(chunks):
-    builder = ContextBuilder(max_tokens=800)
-    context, citations = builder.build(chunks)
-    return context, citations
+    context_parts = []
+    citations = []
+
+    for c in chunks:
+        context_parts.append(c["content"])
+        citations.append({
+            "chunk_id": c["chunk_id"],
+            "file": c["file_id"],
+            "page": c["page"]
+        })
+
+    return "\n\n".join(context_parts), citations
+
+
