@@ -11,14 +11,15 @@ class RetrievalPipeline:
         self,
         faiss_index_path: str = "vectors.faiss",
         mapping_path: str = "id_map.json",
-        top_k: int = 10,
+        dense_top_k: int = 30,     # ⬅ expanded
+        sparse_top_k: int = 30,    # ⬅ expanded
     ):
         self.dense = DenseRetriever(
             index_path=faiss_index_path,
             mapping_path=mapping_path,
-            top_k=top_k,
+            top_k=dense_top_k,
         )
-        self.sparse = SparseRetriever(top_k=top_k)
+        self.sparse = SparseRetriever(top_k=sparse_top_k)
         self.reranker = Reranker()
 
     def search(self, query: str):

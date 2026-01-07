@@ -12,21 +12,54 @@ from retrieval.pipeline import RetrievalPipeline
 EVAL_SET = [
     {
         "question": "What is the scope of UN Regulation No. 79?",
-        "keywords": ["steering", "vehicles", "equipment"]
+        "keywords": ["steering equipment", "vehicles", "categories m n o"]
+    },
+    {
+        "question": "Which vehicle categories does UN Regulation No. 79 apply to?",
+        "keywords": ["category m", "category n", "category o"]
+    },
+    {
+        "question": "What types of steering systems are excluded from the scope of this regulation?",
+        "keywords": ["purely pneumatic", "autonomous steering", "excluded"]
+    },
+    {
+        "question": "What is meant by steering equipment according to the regulation?",
+        "keywords": ["steering control", "steering transmission", "steered wheels", "energy supply"]
     },
     {
         "question": "What is an Advanced Driver Assistance Steering System?",
-        "keywords": ["driver", "assistance", "steering"]
+        "keywords": ["driver", "assistance", "primary control"]
     },
     {
         "question": "What is an Autonomous Steering System?",
-        "keywords": ["autonomous", "off-board", "signals"]
+        "keywords": ["off-board", "external signals", "not permitted"]
     },
     {
-        "question": "Which vehicle categories are covered?",
-        "keywords": ["category m", "category n", "category o"]
+        "question": "What are Automatically Commanded Steering Functions (ACSF)?",
+        "keywords": ["automatic", "electronic control", "assist the driver"]
+    },
+    {
+        "question": "What is a Corrective Steering Function?",
+        "keywords": ["correct", "lane departure", "vehicle stability"]
+    },
+    {
+        "question": "What happens when a failure occurs in a non-mechanical steering transmission?",
+        "keywords": ["warning", "driver", "failure"]
+    },
+    {
+        "question": "What warning signals are required for steering system failures?",
+        "keywords": ["optical warning", "acoustic warning", "driver"]
+    },
+    {
+        "question": "What requirements apply when the steering system shares an energy source with the braking system?",
+        "keywords": ["priority", "steering", "braking performance"]
+    },
+    {
+        "question": "What is required for approval of a vehicle type under this regulation?",
+        "keywords": ["type approval", "technical service", "tests"]
     }
 ]
+
 
 TOP_K = 5
 

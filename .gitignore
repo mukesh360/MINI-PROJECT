@@ -60,7 +60,7 @@ registry/
 # ======================
 # Generated embeddings / indexes
 # ======================
-*.faiss
+# *.faiss
 *.index
 *.bin
 
