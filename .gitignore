@@ -60,7 +60,7 @@ API/
 # ======================
 # Generated embeddings / indexes
 # ======================
-*.faiss
+# *.faiss
 *.index
 *.bin
 
