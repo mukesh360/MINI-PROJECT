@@ -56,7 +56,7 @@ registry/
 *.db
 *.sqlite
 *.sqlite3
-
+API/
 # ======================
 # Generated embeddings / indexes
 # ======================
