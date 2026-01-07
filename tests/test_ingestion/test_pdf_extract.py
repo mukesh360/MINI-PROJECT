@@ -9,11 +9,14 @@ def test_extract_text_from_pdf_mocked():
     fake_pdf = mock.Mock()
     fake_pdf.pages = [fake_page]
 
-    with mock.patch("pdfplumber.open", return_value=fake_pdf):
+    # Mock context manager behavior
+    mock_ctx = mock.Mock()
+    mock_ctx.__enter__ = mock.Mock(return_value=fake_pdf)
+    mock_ctx.__exit__ = mock.Mock(return_value=None)
+
+    with mock.patch("pdfplumber.open", return_value=mock_ctx):
         results = extract_text_from_pdf("dummy.pdf")
 
     assert len(results) == 1
     assert results[0]["page"] == 1
     assert results[0]["text"] == "Sample text"
-
-
