@@ -41,6 +41,13 @@ htmlcov/
 # ======================
 *.log
 
+
+# DuckDB database files
+*.duckdb
+
+# Accidental / local artifacts
+0.9.2
+
 # ======================
 # Runtime / Data
 # ======================
