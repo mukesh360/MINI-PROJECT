@@ -80,18 +80,22 @@ def ingest_jsonl(jsonl_path: str):
         conn.close()
 
 def load_all_chunks():
-    """
-    Load all chunk contents from DuckDB.
-    Returns: List[str]
-    """
     conn = get_connection()
 
-    try:
-        rows = conn.execute(
-            "SELECT content FROM chunks ORDER BY file_id, chunk_index"
-        ).fetchall()
+    rows = conn.execute("""
+        SELECT chunk_id, content, metadata
+        FROM chunks
+        ORDER BY chunk_index
+    """).fetchall()
 
-        return [row[0] for row in rows]
+    conn.close()
 
-    finally:
-        conn.close()
+    chunks = []
+    for chunk_id, content, metadata in rows:
+        chunks.append({
+            "chunk_id": chunk_id,
+            "content": content,
+            "metadata": json.loads(metadata) if metadata else {}
+        })
+
+    return chunks

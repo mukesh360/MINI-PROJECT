@@ -47,7 +47,6 @@ class ContextBuilder:
         return "\n\n".join(context_parts), citations
 
 def build_context_from_chunks(chunks):
-    """
-    Combine retrieved chunks into a single context string.
-    """
-    return "\n\n".join(chunks)
+    builder = ContextBuilder(max_tokens=800)
+    context, citations = builder.build(chunks)
+    return context, citations
