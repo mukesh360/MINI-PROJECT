@@ -32,7 +32,7 @@ EVAL_SET = [
     },
     {
         "question": "What is an Autonomous Steering System?",
-        "keywords": ["off-board", "external signals", "not permitted"]
+        "keywords": ["off-board", "external signals", "not permitted"] 
     },
     {
         "question": "What are Automatically Commanded Steering Functions (ACSF)?",
