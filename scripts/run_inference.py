@@ -41,7 +41,7 @@ def run_query(question: str):
 
 if __name__ == "__main__":
     response = run_query(
-        "Turning circle"
+        "Full-power steering equipment"
     )
 
     print("\nAnswer:\n", response["answer"])

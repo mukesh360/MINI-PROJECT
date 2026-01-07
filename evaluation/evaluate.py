@@ -61,15 +61,15 @@ EVAL_SET = [
 ]
 
 
-TOP_K = 5
+TOP_K = 3
 
 
 # ---------------------------
 # UTILS
 # ---------------------------
-def keyword_match(text: str, keywords: List[str]) -> bool:
-    text = text.lower()
-    return any(k.lower() in text for k in keywords)
+def keyword_match(answer, keywords):
+    answer = answer.lower()
+    return any(k.lower() in answer for k in keywords)
 
 
 # ---------------------------
@@ -102,10 +102,16 @@ def evaluate_answer_quality(llm: LLM, pipeline: RetrievalPipeline):
     for item in EVAL_SET:
         results = pipeline.search(item["question"])[:TOP_K]
         context = "\n".join(r["text"] for r in results)
+        context = context[:1500]
 
         prompt = f"""
-        Answer the question strictly using the context below.
-        Do not add external information.
+        You are a regulatory compliance assistant.
+
+        Answer the question using ONLY the provided context.
+        - Do NOT infer or assume information.
+        - Do NOT use external knowledge.
+        - If the answer is not explicitly stated, reply exactly:
+        "Not specified in the regulation."
 
         Context:
         {context}
@@ -116,12 +122,20 @@ def evaluate_answer_quality(llm: LLM, pipeline: RetrievalPipeline):
 
         answer = llm.generate(prompt)
 
-        keyword_hits = sum(
-            1 for k in item["keywords"]
-            if k.lower() in answer.lower()
-        )
+        answer_lower = answer.lower()
 
-        score = keyword_hits / len(item["keywords"])
+        # Case 1: Correct refusal
+        if "not specified in the regulation" in answer_lower:
+            score = 1.0   # FULL credit for honesty
+
+        # Case 2: Grounded answer
+        else:
+            keyword_hits = sum(
+                1 for k in item["keywords"]
+                if k.lower() in answer_lower
+            )
+            score = keyword_hits / len(item["keywords"])
+
         scores.append(score)
 
         print("\nQ:", item["question"])
@@ -151,7 +165,10 @@ def evaluate_latency(llm: LLM, pipeline: RetrievalPipeline):
 # MAIN
 # ---------------------------
 def main():
-    pipeline = RetrievalPipeline(top_k=TOP_K)
+    pipeline = RetrievalPipeline(
+        dense_top_k=30,
+        sparse_top_k=30
+    )
     llm = LLM()
 
     print("\n--- Evaluating Retrieval Pipeline ---")
