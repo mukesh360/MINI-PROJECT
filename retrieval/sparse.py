@@ -39,7 +39,10 @@ class BM25Index:
         return [(self.id_map[i], float(score)) for i, score in ranked]
 
     def save(self, index_path: str):
-        os.makedirs(os.path.dirname(index_path), exist_ok=True)
+        index_dir = os.path.dirname(index_path)
+        if index_dir:
+            os.makedirs(index_dir, exist_ok=True)
+
 
         with open(index_path, "wb") as f:
             pickle.dump(
@@ -60,25 +63,24 @@ class BM25Index:
         obj.id_map = data["id_map"]
         return obj
 
-
-# ✅ PIPELINE-FACING WRAPPER
 class SparseRetriever:
-    """
-    Thin adapter for BM25Index used by retrieval.pipeline
-    """
-
-    def __init__(self, index_path: str, top_k: int = 5):
-        self.index = BM25Index.load(index_path)
+    def __init__(
+        self,
+        index_path: str = "bm25.pkl",
+        top_k: int = 5,
+    ):
+        self.index_path = index_path
         self.top_k = top_k
+        self.index = BM25Index.load(index_path)
 
     def search(self, query: str):
         results = self.index.search(query, top_k=self.top_k)
 
         return [
             {
-                "chunk_id": chunk_id,
+                "chunk_id": cid,
                 "score": score,
                 "source": "sparse",
             }
-            for chunk_id, score in results
+            for cid, score in results
         ]

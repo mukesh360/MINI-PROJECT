@@ -1,10 +1,8 @@
-# ingestion/index_writer.py
-
-from typing import List, Dict
-import faiss
-import numpy as np
 import os
 import json
+import faiss
+import numpy as np
+from typing import List
 
 from ingestion.embedding import Embedder
 
@@ -22,39 +20,46 @@ class FaissIndexWriter:
         self.embedder = Embedder(model_name=model_name)
         self.dim = self.embedder.dim
 
-        # Cosine similarity via inner product (normalized vectors)
-        self.index = faiss.IndexFlatIP(self.dim)
-
-        self.id_map: Dict[int, str] = {}
-
-    def build_index(
+    def build_and_save(
         self,
         chunk_ids: List[str],
         texts: List[str],
+        chunk_indices: List[int] | None = None,
     ):
-        assert len(chunk_ids) == len(texts), "Chunk IDs and texts mismatch"
+        assert len(chunk_ids) == len(texts), "IDs and texts length mismatch"
 
-        embeddings = self.embedder.embed_texts(texts)
+        if chunk_indices is None:
+            chunk_indices = list(range(len(chunk_ids)))
 
-        # Add vectors to FAISS
-        self.index.add(embeddings)
+        # ---- Embed ----
+        embeddings = self.embedder.embed_texts(texts).astype("float32")
+        faiss.normalize_L2(embeddings)
 
-        # Build ID map
-        start_id = len(self.id_map)
-        for i, chunk_id in enumerate(chunk_ids):
-            self.id_map[start_id + i] = chunk_id
+        # ---- Build FAISS ----
+        index = faiss.IndexFlatIP(self.dim)
+        index.add(embeddings)
 
-        self._validate(len(chunk_ids))
+        index_dir = os.path.dirname(self.index_path)
+        if index_dir:
+            os.makedirs(index_dir, exist_ok=True)
 
-    def save(self):
-        os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
+        faiss.write_index(index, self.index_path)
 
-        faiss.write_index(self.index, self.index_path)
+        # ---- ID Mapping ----
+        id_map = {
+            str(i): {
+                "chunk_id": chunk_ids[i],
+                "chunk_index": int(chunk_indices[i]),
+            }
+            for i in range(len(chunk_ids))
+        }
+
+        map_dir = os.path.dirname(self.mapping_path)
+        if map_dir:
+            os.makedirs(map_dir, exist_ok=True)
 
         with open(self.mapping_path, "w", encoding="utf-8") as f:
-            json.dump(self.id_map, f, indent=2)
+            json.dump(id_map, f, indent=2)
 
-    def _validate(self, expected_count: int):
-        assert (
-            self.index.ntotal == expected_count
-        ), f"FAISS size {self.index.ntotal} != chunk count {expected_count}"
+        print(f"✅ FAISS index saved: {self.index_path}")
+        print(f"✅ ID map saved: {self.mapping_path}")

@@ -33,9 +33,9 @@ class DenseRetriever:
             meta = self.id_map[str(idx)]
             results.append({
                 "chunk_id": meta["chunk_id"],
-                "file_id": meta["file_id"],
                 "chunk_index": meta["chunk_index"],
                 "score": float(score),
                 "source": "dense",
             })
+
         return results

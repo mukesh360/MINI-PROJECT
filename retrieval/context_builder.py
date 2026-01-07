@@ -1,33 +1,47 @@
-# retrieval/context_builder.py
-
-from typing import List, Dict
+from typing import List, Tuple
 from ingestion.chunking.tokenizer import TokenCounter
+from storage.db import get_connection
 
 
 class ContextBuilder:
-    def __init__(
-        self,
-        max_tokens: int = 2048,
-    ):
+    def __init__(self, max_tokens: int = 800):
         self.max_tokens = max_tokens
-        self.token_counter = TokenCounter()
+        self.counter = TokenCounter()
 
-    def build(self, chunks: List[Dict]) -> str:
+    def build(self, chunks: List[dict]) -> Tuple[str, List[str]]:
         """
-        Packs chunks until token budget is exhausted.
-        Each chunk must contain: {text}
+        Builds context by:
+        - Fetching text from DB
+        - Enforcing token budget
+        - Returning citations
         """
+        conn = get_connection()
+
         context_parts = []
-        used_tokens = 0
+        citations = []
+        total_tokens = 0
 
         for chunk in chunks:
-            text = chunk["text"]
-            tokens = self.token_counter.count(text)
+            chunk_id = chunk["chunk_id"]
 
-            if used_tokens + tokens > self.max_tokens:
+            row = conn.execute(
+                "SELECT content FROM chunks WHERE chunk_id = ?",
+                (chunk_id,),
+            ).fetchone()
+
+            if not row:
+                continue
+
+            text = row[0]
+            tokens = self.counter.count(text)
+
+            if total_tokens + tokens > self.max_tokens:
                 break
 
             context_parts.append(text)
-            used_tokens += tokens
+            citations.append(chunk_id)
+            total_tokens += tokens
 
-        return "\n\n".join(context_parts)
+        conn.close()
+
+        return "\n\n".join(context_parts), citations
